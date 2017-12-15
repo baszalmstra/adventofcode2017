@@ -1,57 +1,124 @@
-type LoopInfo = (u32, u32, u32);
+use std::ops::Add;
+use std::collections::HashMap;
 
-fn find_loop_info(x:u32) -> LoopInfo {
-    let mut loop_index:u32 = 0;
-    let mut counter = 1;
-    if x == 1 {
-        return (0,1,1)
-    }
-    return loop {
-        let count_in_loop = (loop_index*2+1)*4 + 4;
-        counter += count_in_loop;
-        if counter >= x {
-            break (loop_index+1, counter - count_in_loop + 1,count_in_loop);
-        }
-        loop_index = loop_index + 1;
-    };
+#[derive(Hash, Copy, Clone, Debug, PartialEq, Eq)]
+struct Coordinate {
+    x: i32,
+    y: i32,
 }
 
-fn find_position(x:u32) -> (i32, i32) {
-    let (loop_index, starting_value, _count_in_loop) = find_loop_info(x);
-    let (starting_position_x, starting_position_y) = (loop_index as i32, -(loop_index as i32)+1);
-
-    if starting_value == x {
-        return (starting_position_x, starting_position_y);
-    };
-
-    let side_length = (loop_index-1)*2 + 1;
-
-    // Bottom side?
-    let bottom_left_value = starting_value + side_length*3+2;
-    if bottom_left_value <= x {
-        return (starting_position_x - side_length as i32 - 1 + (x - bottom_left_value) as i32, starting_position_y-1)
+impl Coordinate {
+    fn distance(self) -> u32 {
+        (self.x.abs() + self.y.abs()) as u32
     }
+}
 
-    // Left side?
-    let top_left_value = starting_value + side_length*2+1;
-    if top_left_value <= x {
-        return (starting_position_x - side_length as i32 - 1, starting_position_y+side_length as i32-(x - top_left_value) as i32)
+impl Add for Coordinate {
+    type Output = Coordinate;
+
+    fn add(self, other: Coordinate) -> Coordinate {
+        Coordinate {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
     }
+}
 
-    // Top side?
-    let top_right_value = starting_value + side_length;
-    if top_right_value <= x {
-        return (starting_position_x - (x - top_right_value) as i32, starting_position_y+side_length as i32)
+#[derive(Clone, Copy)]
+struct Cursor {
+    index: u32,
+    coord: Coordinate,
+    direction_index: usize,
+    side_length: u32,
+    side_offset: u32
+}
+
+static DIRECTIONS: &'static [Coordinate] = &[
+    Coordinate {x: 0, y: 1}, 
+    Coordinate {x: -1, y: 0}, 
+    Coordinate {x: 0, y: -1}, 
+    Coordinate {x: 1, y: 0}
+];
+
+static NEIGHBOURS: &'static [Coordinate] = &[
+    Coordinate {x: -1, y:  1}, Coordinate {x:  0, y:  1}, Coordinate {x:  1, y:  1},  
+    Coordinate {x: -1, y:  0},                            Coordinate {x:  1, y:  0},  
+    Coordinate {x: -1, y: -1}, Coordinate {x:  0, y: -1}, Coordinate {x:  1, y: -1},
+];
+
+fn advance(current:Cursor) -> Cursor {
+    if current.side_offset == current.side_length {
+        if current.direction_index < 3 {
+            Cursor {
+                index: current.index + 1,
+                coord: current.coord + DIRECTIONS[current.direction_index+1],
+                direction_index: current.direction_index + 1,
+                side_length: current.side_length,
+                side_offset: 2
+            }
+        } else {
+            Cursor {
+                index: current.index + 1,
+                coord: current.coord + Coordinate { x: 1, y: 0},
+                direction_index: 0,
+                side_length: current.side_length + 2,
+                side_offset: 2 
+            }
+        }
+    } else {
+        Cursor { 
+            index: current.index + 1,
+            coord: current.coord + DIRECTIONS[current.direction_index],
+            direction_index: current.direction_index,
+            side_length: current.side_length,
+            side_offset: current.side_offset + 1
+        }
     }
-
-    // Right side
-    (starting_position_x, starting_position_y + (x - starting_value) as i32)
 }
 
 fn main() {
     let input = 347991;
-    let (x,y) = find_position(input);
-    let distance = x.abs() + y.abs();
+    
+    let starting_cursor = Cursor { 
+        index: 2, 
+        coord: Coordinate { x: 1, y: 0 },
+        side_length: 3,
+        side_offset: 2,
+        direction_index: 0,
+    };
 
-    println!("Position ({}): ({},{}) ({})", input, x,y, distance);
+    let mut cursor = starting_cursor;
+
+    
+
+    while cursor.index < input{
+        cursor = advance(cursor)
+    }
+
+    println!("Day 3a: {}", cursor.coord.distance());
+
+    let mut values = HashMap::new();
+    values.insert(Coordinate {x:0, y:0}, 1u32);
+    let mut cursor = starting_cursor;
+    let sum = loop {
+        
+        let mut sum = 0u32;
+        for dir in NEIGHBOURS {
+            let neighbour_coordinate = cursor.coord + *dir;
+            sum += match values.get(&neighbour_coordinate) {
+                Some(value) => *value,
+                None => 0u32
+            };
+        }
+
+        values.insert(cursor.coord, sum);
+
+        if sum > input {
+            break sum
+        }
+
+        cursor = advance(cursor)
+    };
+
+    println!("Day 3b: {}", sum);
 }
