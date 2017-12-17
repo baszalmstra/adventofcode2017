@@ -145,7 +145,9 @@ fn main() {
     let f = File::open("inputs/day8.txt").expect("input file not found");
     let line_iter = BufReader::new(f).lines().map(|line| line.unwrap());
     let instructions = line_iter.map(|line| line.parse::<Instruction>().unwrap()).collect::<Vec<Instruction>>();
-
+ 
+    
+    
     let mut historic_max_value = 0;
     let mut registers = Registers::new();
     for instr in instructions {
