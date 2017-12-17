@@ -110,8 +110,6 @@ fn main() {
 
         // Calc total weights
         root_mut.calc_total();
-
-        
     }
 
     let mut unbalanced_sub = root.clone();
@@ -128,8 +126,8 @@ fn main() {
                 let unbalanced_sub_borrow = unbalanced_sub.borrow();
                 println!("Unbalanced sub: {}, weight: {}, should be: {}", 
                     unbalanced_sub_borrow.name,
-                    unbalanced_sub_borrow.weight,
-                    balanced_weight-(unbalanced_sub_borrow.total_weight-unbalanced_sub_borrow.weight));
+                    unbalanced_sub_borrow.weight, 
+                    balanced_weight-(unbalanced_sub_borrow.total_weight-unbalanced_sub_borrow.weight)); 
                 break;
             }
         }
