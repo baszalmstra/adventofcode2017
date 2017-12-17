@@ -8,6 +8,10 @@ regex = "0.2.3"
 lazy_static = "1.0.0"
 
 [[bin]]
+name="day10"
+path="src/day10/main.rs"
+
+[[bin]]
 name="day9"
 path="src/day9/main.rs"
 
